@@ -1,6 +1,7 @@
 package com.example.ai
 
 import android.graphics.Bitmap
+import android.util.Base64
 import android.util.Log
 import com.example.data.repository.KisanRepository
 import com.example.engine.Dates
@@ -13,9 +14,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.ByteArrayOutputStream
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 private const val TAG = "KisanAiService"
+private const val MODEL = "gemini-3.8-flash"
 
 /** Where an answer came from. The Ask screen shows this to the farmer. */
 enum class AnswerSource {
@@ -45,8 +55,8 @@ data class PestDiagnosisResult(
 /**
  * Questions and leaf photos.
  *
- * Online, both go to Gemini through the Firebase project in google-services.json, so no API key
- * lives in the app. If that call fails:
+ * Online, both go to Gemini: with the packaged API key if the build has one (GEMINI_API_KEY),
+ * otherwise through the Firebase project in google-services.json. If both fail:
  *  - a question is answered from the on-device engine and labelled as an offline answer;
  *  - a photo is reported as NOT analysed. The app never invents a diagnosis.
  */
@@ -54,17 +64,98 @@ class KisanAiService(private val repository: KisanRepository? = null) {
 
     // Lazy, so a missing Firebase setup cannot crash the app at start-up.
     private val textModel by lazy {
-        Firebase.ai.generativeModel("gemini-3.8-flash")
+        Firebase.ai.generativeModel(MODEL)
+    }
+
+    /**
+     * The Gemini API key from the build (GEMINI_API_KEY in .env, or the AI Studio Secrets panel),
+     * or "" if none was packaged. Read by reflection so the app still compiles when the build
+     * defines no such field.
+     */
+    private val apiKey: String by lazy {
+        val value = runCatching {
+            Class.forName("com.example.BuildConfig").getField("GEMINI_API_KEY").get(null) as? String
+        }.getOrNull().orEmpty().trim()
+        if (value.isEmpty() || value == "MY_GEMINI_API_KEY") "" else value
+    }
+
+    private val http by lazy {
+        OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(40, TimeUnit.SECONDS)
+            .build()
+    }
+
+    /**
+     * Ask Gemini. Tries the API key first when one is packaged, then the Firebase project.
+     * Returns the reply text, which may be empty. Throws if neither route works.
+     */
+    private suspend fun generate(prompt: String, photo: Bitmap?): String {
+        if (apiKey.isNotEmpty()) {
+            val direct = runCatching { generateWithKey(prompt, photo) }
+                .onFailure { Log.w(TAG, "Gemini call with API key failed", it) }
+                .getOrNull()
+            if (!direct.isNullOrBlank()) return direct
+        }
+        val response = if (photo == null) {
+            textModel.generateContent(prompt)
+        } else {
+            textModel.generateContent(
+                content {
+                    image(photo)
+                    text(prompt)
+                }
+            )
+        }
+        return response.text.orEmpty()
+    }
+
+    /** One blocking call to the Gemini REST API. Returns null if the reply holds no text. */
+    private fun generateWithKey(prompt: String, photo: Bitmap?): String? {
+        val parts = JSONArray()
+        if (photo != null) {
+            val bytes = ByteArrayOutputStream()
+            photo.compress(Bitmap.CompressFormat.JPEG, 85, bytes)
+            parts.put(
+                JSONObject().put(
+                    "inline_data",
+                    JSONObject()
+                        .put("mime_type", "image/jpeg")
+                        .put("data", Base64.encodeToString(bytes.toByteArray(), Base64.NO_WRAP))
+                )
+            )
+        }
+        parts.put(JSONObject().put("text", prompt))
+        val body = JSONObject()
+            .put("contents", JSONArray().put(JSONObject().put("parts", parts)))
+            .toString()
+        val request = Request.Builder()
+            .url("https://generativelanguage.googleapis.com/v1beta/models/$MODEL:generateContent")
+            .addHeader("x-goog-api-key", apiKey)
+            .post(body.toRequestBody("application/json".toMediaType()))
+            .build()
+        http.newCall(request).execute().use { response ->
+            val payload = response.body?.string().orEmpty()
+            if (!response.isSuccessful) {
+                Log.w(TAG, "Gemini API returned HTTP ${response.code}: ${payload.take(300)}")
+                return null
+            }
+            val replyParts = JSONObject(payload)
+                .optJSONArray("candidates")?.optJSONObject(0)
+                ?.optJSONObject("content")?.optJSONArray("parts") ?: return null
+            val text = StringBuilder()
+            for (i in 0 until replyParts.length()) {
+                text.append(replyParts.optJSONObject(i)?.optString("text").orEmpty())
+            }
+            return text.toString().takeIf { it.isNotBlank() }
+        }
     }
 
     /** Answer a farmer's question in Urdu or English, saying where the answer came from. */
     suspend fun ask(userQuery: String, isUrdu: Boolean): AiAnswer = withContext(Dispatchers.IO) {
         val prompt = buildQuestionPrompt(userQuery, isUrdu)
         try {
-            val response = withTimeout(30_000L) {
-                textModel.generateContent(prompt)
-            }
-            val text = response.text?.trim().orEmpty()
+            val text = withTimeout(60_000L) { generate(prompt, null) }.trim()
             if (text.isNotEmpty()) {
                 return@withContext AiAnswer(text, AnswerSource.ONLINE)
             }
@@ -153,15 +244,7 @@ class KisanAiService(private val repository: KisanRepository? = null) {
         """.trimIndent()
 
         try {
-            val response = withTimeout(45_000L) {
-                textModel.generateContent(
-                    content {
-                        image(bitmap)
-                        text(prompt)
-                    }
-                )
-            }
-            val text = response.text.orEmpty()
+            val text = withTimeout(90_000L) { generate(prompt, bitmap) }
             val finding = field(text, "FINDING")?.lowercase(Locale.US)?.replace(' ', '_')
             if (finding == null) {
                 Log.w(TAG, "Photo reply did not follow the expected format")
