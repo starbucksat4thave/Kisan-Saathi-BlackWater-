@@ -52,6 +52,11 @@ git branch -M main
 git remote add origin https://github.com/YOUR_USERNAME/wanderpulse.git
 git push -u origin main
 ```
+### Test apk file to Install on Android
+1. Download the latest `app-debug.apk` from the **release** folder of this repository.
+2. Install the APK on your Android device by following the standard installation process.
+3. Grant the necessary permissions for the app to function correctly.
+4. Launch the app and enjoy the features!
 
 ---
 
