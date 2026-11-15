@@ -61,6 +61,8 @@ fun FieldHealthScreen(
 ) {
     val isUrdu = LocalAppLanguage.current.isUrdu
     val ndviPoints = remember { repository.getNdviCurve() }
+    val engine = repository.engine
+    val snap = remember(engine) { repository.getLatestSnapshot() }
 
     Column(
         modifier = modifier
@@ -79,50 +81,16 @@ fun FieldHealthScreen(
             color = MaterialTheme.colorScheme.onBackground
         )
         Text(
-            text = if (isUrdu) "ناسا HLS (30m) اور Sentinel-2 سیٹلائٹ سے حاصل کردہ پودوں کی ہریالی (NDVI)"
-                else "Vegetation vigor (NDVI) derived from NASA HLS (30m) & Sentinel-2 satellites",
+            text = if (isUrdu) "بارش، درجہ حرارت اور مٹی کے ڈیٹا سے کھیت کی آج کی صورتحال۔ سیٹلائٹ ہریالی (NDVI) ابھی شامل نہیں ہوئی۔"
+                else "Today's field conditions from rainfall, temperature and soil data. Satellite greenness (NDVI) has not been added yet.",
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Status Card in Plain Language
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            color = Color(0xFFE8F5E9),
-            border = androidx.compose.foundation.BorderStroke(1.5.dp, FieldGreen.copy(alpha = 0.4f))
-        ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = null,
-                    tint = FieldGreen,
-                    modifier = Modifier.size(32.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = if (isUrdu) "فصل کی حالت: تسلی بخش اور مضبوط" else "Crop Condition: Satisfactory & Strong",
-                        fontFamily = if (isUrdu) NotoNastaliqUrdu else null,
-                        fontSize = if (isUrdu) 17.sp else 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = FieldGreen
-                    )
-                    Text(
-                        text = if (isUrdu) "آپ کی گندم کی نشوونما پچھلے کامیاب ترین سال (۲۰۲۴) جیسی شاندار ہے، اور ڈھڈیال کے اوسط کھیتوں سے بہتر ہے۔"
-                            else "Your wheat growth closely tracks your best year (2024-25), performing above Dhudial regional average.",
-                        fontSize = 13.sp,
-                        lineHeight = 20.sp,
-                        color = Color(0xFF1B5E20)
-                    )
-                }
-            }
-        }
+        // Today's conditions, from the on-device engine
+        FieldConditionsCard(engine = engine, snap = snap, isUrdu = isUrdu)
 
         Spacer(modifier = Modifier.height(18.dp))
 
@@ -150,7 +118,7 @@ fun FieldHealthScreen(
                         color = MaterialTheme.colorScheme.surfaceVariant
                     ) {
                         Text(
-                            text = "HLS 30m Resolution",
+                            text = if (isUrdu) "نمونہ ڈیٹا" else "Sample data",
                             fontSize = 11.sp,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -257,19 +225,19 @@ fun FieldHealthScreen(
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     LegendItem(
                         color = FieldGreen,
-                        label = if (isUrdu) "موجودہ سیزن ۲۰۲۶–۲۷ (Current Season)" else "Current Season 2026-27 (Akbar-19)"
+                        label = if (isUrdu) "نمونہ: موجودہ سیزن" else "Sample: current season"
                     )
                     LegendItem(
                         color = WheatGold,
-                        label = if (isUrdu) "سیزن ۲۰۲۴–۲۵ (کامیاب ترین ریکارڈ ۳۶ من)" else "2024-25 Season (Record 36 maunds/acre)"
+                        label = if (isUrdu) "نمونہ: اچھا سیزن" else "Sample: a good season"
                     )
                     LegendItem(
                         color = Color(0xFFD32F2F),
-                        label = if (isUrdu) "سیزن ۲۰۲۳–۲۴ (تاخیر سے بوائی ۱۸ من)" else "2023-24 Season (Late Sowing 18 maunds/acre)"
+                        label = if (isUrdu) "نمونہ: تاخیر سے بوئی گئی فصل" else "Sample: a late-sown season"
                     )
                     LegendItem(
                         color = Color.Gray,
-                        label = if (isUrdu) "پوٹھوہار علاقائی اوسط (Regional Median)" else "Pothohar Regional Median (NASA HLS)"
+                        label = if (isUrdu) "نمونہ: علاقائی اوسط" else "Sample: regional median"
                     )
                 }
             }
@@ -277,94 +245,8 @@ fun FieldHealthScreen(
 
         Spacer(modifier = Modifier.height(18.dp))
 
-        // Simple Field Zone Map (Bara Khet - 4 Acres)
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Default.Map, contentDescription = null, tint = FieldGreen)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = if (isUrdu) "کھیت کا نقشہ (Bara Khet - 4 Acres Zones)" else "Field Zone Map (Bara Khet - 4 Acres)",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Zone layout representation
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(130.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFE8F5E9))
-                        .border(1.5.dp, FieldGreen.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
-                ) {
-                    Row(modifier = Modifier.fillMaxSize()) {
-                        // Zone A (North)
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxSize()
-                                .background(Color(0xFF81C784).copy(alpha = 0.7f))
-                                .border(1.dp, Color.White),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = if (isUrdu) "شمالی حصہ (2 ایکڑ)" else "North Zone (2 Acres)",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF1B5E20)
-                                )
-                                Text(
-                                    text = if (isUrdu) "وتر: 26% (بہترین)" else "Moisture: 26% (Optimal)",
-                                    fontSize = 11.sp,
-                                    color = Color(0xFF1B5E20)
-                                )
-                            }
-                        }
-                        // Zone B (South)
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxSize()
-                                .background(Color(0xFFA5D6A7).copy(alpha = 0.5f))
-                                .border(1.dp, Color.White),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = if (isUrdu) "جنوبی ڈھلوان (2 ایکڑ)" else "South Slope (2 Acres)",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF1B5E20)
-                                )
-                                Text(
-                                    text = if (isUrdu) "وتر: 22% (مناسب)" else "Moisture: 22% (Adequate)",
-                                    fontSize = 11.sp,
-                                    color = Color(0xFF1B5E20)
-                                )
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = if (isUrdu) "مرکزی کوآرڈینیٹس: 32.93°N, 72.86°E · ڈھڈیال، چکوال · مٹی کی ساخت: لوم (Loam)"
-                        else "Centroid: 32.93°N, 72.86°E · Dhudial, Chakwal · Soil Texture: Loam",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
+        // Soil at the field, from SoilGrids
+        SoilCard(engine = engine, isUrdu = isUrdu)
 
         Spacer(modifier = Modifier.height(24.dp))
     }

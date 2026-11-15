@@ -46,7 +46,7 @@ fun BarkatBasisDialog(
     maundEstimate: Double,
     lossFactorBasis: String,
     fieldAreaAcre: Double = 4.0,
-    expectedYieldPerAcre: Double = 32.0,
+    expectedYieldPerAcre: Double = 17.9, // Chakwal district rainfed average, 5 reported seasons
     onDismiss: () -> Unit
 ) {
     val isUrdu = LocalAppLanguage.current.isUrdu

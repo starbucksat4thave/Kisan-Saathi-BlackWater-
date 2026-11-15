@@ -2,6 +2,9 @@ package com.example.data.repository
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.example.R
 import com.example.data.model.AdvisoryCard
 import com.example.data.model.AdvisorySeverity
@@ -43,7 +46,17 @@ class KisanRepository(private val db: FirebaseFirestore) {
 
     private val auth = Firebase.auth
 
-    var engine: com.example.engine.KisanEngine? = null
+    /** The on-device engine. Held as Compose state so screens redraw when it finishes loading. */
+    var engine: com.example.engine.KisanEngine? by mutableStateOf<com.example.engine.KisanEngine?>(null)
+
+    /** Conditions for the most recent day that has data, or null until the engine has loaded. */
+    fun getLatestSnapshot(): com.example.engine.Snapshot? {
+        val e = engine ?: return null
+        return runCatching {
+            val day = e.lastObserved
+            e.snapshot(day, EngineAdapter.defaultSowingFor(day))
+        }.getOrNull()
+    }
 
     /**
      * Returns on-device engine Snapshot for a given seasonal date if available.
@@ -510,55 +523,52 @@ class KisanRepository(private val db: FirebaseFirestore) {
     /**
      * 3 Seeded Past Seasons for Rashid Bhai
      */
-    fun getHistoricalSeasons(): List<HistoricalSeasonData> {
-        return listOf(
+    /**
+     * Past seasons from the real record: weather replayed for a crop sown on 10 November, and the
+     * Chakwal district rainfed yield where the Punjab Crop Reporting Service published one.
+     * This is a district-level record, not the farmer's own diary. Empty until the engine has loaded.
+     */
+    fun getHistoricalSeasons(isUrdu: Boolean = true): List<HistoricalSeasonData> {
+        val all = engine?.seasons ?: return emptyList()
+        return all.takeLast(3).reversed().map { s ->
+            val yieldValue = s.districtYieldMaundPerAcre ?: 0.0
+            val events = if (isUrdu) listOf(
+                "نومبر تا اپریل بارش: ${s.rainNovAprMm.toInt()} ملی میٹر (GPM IMERG)",
+                "کہر والی راتیں (2 ڈگری سے کم): ${s.frostDays}",
+                "دانہ بھرتے وقت گرم دن (32 ڈگری یا زیادہ): ${s.grainFillHeatDays}"
+            ) else listOf(
+                "Rain November to April: ${s.rainNovAprMm.toInt()} mm (GPM IMERG)",
+                "Frost nights (below 2 C): ${s.frostDays}",
+                "Hot days at grain fill (32 C or more): ${s.grainFillHeatDays}"
+            )
+            val lesson = when {
+                s.grainFillHeatDays >= 5 ->
+                    if (isUrdu) "دانہ بھرتے وقت ${s.grainFillHeatDays} گرم دن آئے۔ جلد بوائی اس خطرے کو کم کرتی ہے۔"
+                    else "Grain fill met ${s.grainFillHeatDays} hot days. Earlier sowing lowers this risk."
+                s.rainNovAprMm < 150.0 ->
+                    if (isUrdu) "خشک سیزن: نومبر سے اپریل تک صرف ${s.rainNovAprMm.toInt()} ملی میٹر بارش۔ بوائی کے وقت وتر سب سے اہم رہا۔"
+                    else "A dry season: only ${s.rainNovAprMm.toInt()} mm from November to April. Moisture at sowing mattered most."
+                yieldValue >= 20.0 ->
+                    if (isUrdu) "ضلع کے لیے اچھا سال: مناسب بارش اور دانہ بھرتے وقت کم گرمی۔"
+                    else "A good year for the district: steady rain and little heat at grain fill."
+                else ->
+                    if (isUrdu) "اوسط سیزن: ریکارڈ میں شدید گرمی یا خشک سالی کا واضح اثر نہیں۔"
+                    else "An average season: no strong heat or drought signal in the record."
+            }
             HistoricalSeasonData(
-                seasonId = "rabi_2023_24",
-                seasonLabelUr = "ربیع ۲۰۲۳–۲۴ (تاخیر کا سبق)",
-                seasonLabelEn = "Rabi 2023-24 (Late Sowing & Heat)",
-                sowingDate = "25 نومبر ۲۰۲۳",
-                harvestDate = "22 اپریل ۲۰۲۴",
-                yieldMaundPerAcre = 18.0,
-                eventsUr = listOf(
-                    "بوائی میں 15 دن کی تاخیر",
-                    "مارچ میں 35°C گرم لہر (NASA POWER)",
-                    "دانہ باریک اور پچکا ہوا"
-                ),
-                lessonsUr = "تاخیر سے بوائی کرنے سے دانہ بھرائی کا وقت مارچ کی تپش میں آ گیا۔ اگلے سیزن میں 10 نومبر سے پہلے وتر پر بوائی کا فیصلہ کیا۔",
-                badgeEarned = null
-            ),
-            HistoricalSeasonData(
-                seasonId = "rabi_2024_25",
-                seasonLabelUr = "ربیع ۲۰۲۴–۲۵ (کامیاب ترین سال)",
-                seasonLabelEn = "Rabi 2024-25 (Ideal Timing & High Yield)",
-                sowingDate = "05 نومبر ۲۰۲۴",
-                harvestDate = "18 اپریل ۲۰۲۵",
-                yieldMaundPerAcre = 36.0,
-                eventsUr = listOf(
-                    "صحیح وتر پر 5 نومبر کو بوائی (SMAP)",
-                    "بارش کے بعد بروقت یوریا کھاد",
-                    "تیلے کے غیر ضروری اسپرے سے گریز"
-                ),
-                lessonsUr = "سیٹلائٹ وتر اور بروقت کھاد کے استعمال سے پچھلے سال کے مقابلے میں پیداوار دوگنا ہو گئی۔ 'وتر والا' تمغہ حاصل کیا۔",
-                badgeEarned = "وتر والا (Wattar Wala)"
-            ),
-            HistoricalSeasonData(
-                seasonId = "rabi_2025_26",
-                seasonLabelUr = "ربیع ۲۰۲۵–۲۶ (بے وقت بارش کا نقصان)",
-                seasonLabelEn = "Rabi 2025-26 (Harvest Rain Loss)",
-                sowingDate = "08 نومبر ۲۰۲۵",
-                harvestDate = "26 اپریل ۲۰۲۶",
-                yieldMaundPerAcre = 24.0,
-                eventsUr = listOf(
-                    "پودوں کی نشوونما اچھی رہی",
-                    "کٹائی کے وقت اچانک 40mm بارش (IMERG)",
-                    "کھلی فصل بھیگنے سے دانہ داغی ہوا"
-                ),
-                lessonsUr = "کٹائی کے وقت موسم کی پیشگی وارننگ کا نہ ہونا نقصان دہ رہا۔ اب کسان ساتھی کی بارش سے پہلے وارننگ کٹائی کے لیے لازمی ہے۔",
+                seasonId = "rabi_" + s.season.replace('-', '_'),
+                seasonLabelUr = "ربیع ${s.season}",
+                seasonLabelEn = "Rabi ${s.season}",
+                sowingDate = if (isUrdu) "10 نومبر (فرض کردہ)" else "10 Nov (assumed)",
+                harvestDate = if (isUrdu) "ریکارڈ نہیں" else "not recorded",
+                yieldMaundPerAcre = yieldValue,
+                eventsUr = events,
+                lessonsUr = lesson,
                 badgeEarned = null
             )
-        )
+        }
     }
+
 
     /**
      * Summer Rotation Options with AquaCrop 20-Year Weather Replay
