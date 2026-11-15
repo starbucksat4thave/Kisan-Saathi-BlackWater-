@@ -9,11 +9,16 @@ class AudioHelper(context: Context) : TextToSpeech.OnInitListener {
     private var tts: TextToSpeech? = TextToSpeech(context.applicationContext, this)
     private var isInitialized = false
 
+    /** False when the phone has no Urdu voice installed; the Ask screen then shows a hint. */
+    var urduVoiceAvailable: Boolean = true
+        private set
+
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             val result = tts?.setLanguage(Locale("ur", "PK"))
             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                // Fallback to Hindi or Arabic phonetics if Urdu is unavailable on the device
+                // Fallback to Arabic phonetics if Urdu is unavailable on the device
+                urduVoiceAvailable = false
                 tts?.setLanguage(Locale("ar"))
             }
             isInitialized = true

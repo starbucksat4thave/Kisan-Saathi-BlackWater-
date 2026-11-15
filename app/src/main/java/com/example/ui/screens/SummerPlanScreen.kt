@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.SummerPlanOption
 import com.example.data.repository.KisanRepository
+import com.example.ui.components.SampleDataBanner
 import com.example.ui.theme.BarkatGold
 import com.example.ui.theme.FieldGreen
 import com.example.ui.theme.NotoNastaliqUrdu
@@ -95,10 +96,17 @@ fun SummerPlanScreen(
             color = MaterialTheme.colorScheme.onBackground
         )
         Text(
-            text = if (isUrdu) "ناسا POWER موسمیاتی ۲۰ سالہ تاریخ (2005–2025) اور AquaCrop ماڈل پر مبنی تقابل"
-                else "Based on NASA POWER 20-year climatology (2005-2025) & AquaCrop modeling",
+            text = if (isUrdu) "گرمیوں کی فصلوں کا تقابل آپ کی ترجیحات کے مطابق"
+                else "Compares summer options against your own priorities",
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+        SampleDataBanner(
+            isUrdu = isUrdu,
+            textUr = "آمدن، پانی اور پیداوار کے اعداد نمونے کے ہیں۔ منڈی کے نرخ اور فصل کا ماڈل ابھی شامل نہیں ہوا۔",
+            textEn = "Income, water and yield figures here are samples. Market prices and a crop-model run have not been added yet."
         )
 
         Spacer(modifier = Modifier.height(14.dp))

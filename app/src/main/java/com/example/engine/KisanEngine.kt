@@ -107,6 +107,15 @@ class TreeModel private constructor(
 
 class HeatRisk(val month: Int, val day: Int, val meanHeatDays: Double, val p5Plus: Double, val p10Plus: Double, val worst: Int)
 
+/**
+ * One past season at this location, replayed from the weather record for a crop sown on 10 November.
+ * [districtYieldMaundPerAcre] is the Chakwal district rainfed average and is null where no report was available.
+ */
+class SeasonSummary(
+    val season: String, val rainNovAprMm: Double, val rainOctNovMm: Double, val frostDays: Int,
+    val maturityDate: String, val grainFillHeatDays: Int, val districtYieldMaundPerAcre: Double?
+)
+
 class Snapshot(
     val date: Int, val dataAsOf: Int, val forecastSource: String, val forecast: List<Day>,
     val soilMoisture: Double, val soilMoistureIn3d: Double?, val soilMoistureIn7d: Double?,
@@ -124,7 +133,10 @@ class Advisory(
     val thresholdStatus: String get() = "DRAFT"
 }
 
-class KisanEngine(dailyCsv: String, forecastCsv: String, modelText: String, heatCsv: String, metaText: String) {
+class KisanEngine(
+    dailyCsv: String, forecastCsv: String, modelText: String, heatCsv: String, metaText: String,
+    seasonsCsv: String = "", location: String = "dhudial"
+) {
 
     val days: List<Day> = parseDays(dailyCsv, hasRainProb = false)
     val forecast: List<Day> = parseDays(forecastCsv, hasRainProb = true)
@@ -135,6 +147,9 @@ class KisanEngine(dailyCsv: String, forecastCsv: String, modelText: String, heat
     val porosity: Double = meta.getValue("porosity").toDouble()
     val expectedYieldMaundPerAcre: Double = meta.getValue("expected_rainfed_yield_maund_per_acre").toDouble()
     val lastObserved: Int get() = days.last().date
+
+    /** Completed past seasons for this location, oldest first. Empty if no seasons file was supplied. */
+    val seasons: List<SeasonSummary> = parseSeasons(seasonsCsv, location)
 
     // ---- crop stages ----
 
@@ -388,6 +403,33 @@ class KisanEngine(dailyCsv: String, forecastCsv: String, modelText: String, heat
                 rainProb = if (hasRainProb && iProb >= 0 && c[iProb].isNotEmpty()) c[iProb].toDouble() else null
             )
         }
+    }
+
+    private fun parseSeasons(csv: String, location: String): List<SeasonSummary> {
+        val lines = csv.lineSequence().map { it.trim() }.filter { it.isNotEmpty() }.toList()
+        if (lines.size < 2) return emptyList()
+        val head = lines[0].split(',')
+        fun cell(c: List<String>, name: String): String {
+            val i = head.indexOf(name)
+            return if (i >= 0 && i < c.size) c[i] else ""
+        }
+        val out = ArrayList<SeasonSummary>()
+        for (line in lines.drop(1)) {
+            val c = line.split(',')
+            if (cell(c, "location") != location || cell(c, "complete") != "True") continue
+            out.add(
+                SeasonSummary(
+                    season = cell(c, "season"),
+                    rainNovAprMm = cell(c, "rain_nov_apr_mm").toDoubleOrNull() ?: 0.0,
+                    rainOctNovMm = cell(c, "rain_oct_nov_mm").toDoubleOrNull() ?: 0.0,
+                    frostDays = (cell(c, "frost_days").toDoubleOrNull() ?: 0.0).toInt(),
+                    maturityDate = cell(c, "maturity_date"),
+                    grainFillHeatDays = (cell(c, "grain_fill_heat_days").toDoubleOrNull() ?: 0.0).toInt(),
+                    districtYieldMaundPerAcre = cell(c, "rainfed_yield_maund_per_acre").toDoubleOrNull()
+                )
+            )
+        }
+        return out
     }
 
     private fun parseHeat(csv: String): List<HeatRisk> {

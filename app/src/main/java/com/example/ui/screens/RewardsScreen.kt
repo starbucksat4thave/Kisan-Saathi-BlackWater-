@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.model.BadgeItem
 import com.example.data.repository.KisanRepository
 import com.example.ui.components.BarkatBasisDialog
+import com.example.ui.components.SampleDataBanner
 import com.example.ui.theme.BarkatGold
 import com.example.ui.theme.FieldGreen
 import com.example.ui.theme.NotoNastaliqUrdu
@@ -101,6 +102,13 @@ fun RewardsScreen(
                 else "Celebrating timely decisions, consistency streaks, and crop loss prevention",
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+        SampleDataBanner(
+            isUrdu = isUrdu,
+            textUr = "پوائنٹس، تمغے اور گاؤں کی فہرست نمونے کے ہیں۔",
+            textEn = "Points, badges and the village leaderboard here are samples."
         )
 
         Spacer(modifier = Modifier.height(16.dp))

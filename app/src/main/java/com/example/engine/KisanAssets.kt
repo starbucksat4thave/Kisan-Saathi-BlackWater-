@@ -16,7 +16,8 @@ object KisanAssets {
             context.applicationContext.assets.open("kisan/$name").bufferedReader(Charsets.UTF_8).use { it.readText() }
         val engine = KisanEngine(
             dailyCsv = read("daily_$location.csv"), forecastCsv = read("forecast_$location.csv"),
-            modelText = read("soil_wetness.txt"), heatCsv = read("heat_risk_by_sowing.csv"), metaText = read("meta.txt")
+            modelText = read("soil_wetness.txt"), heatCsv = read("heat_risk_by_sowing.csv"), metaText = read("meta.txt"),
+            seasonsCsv = runCatching { read("seasons.csv") }.getOrDefault(""), location = location
         )
         cached = engine; cachedLocation = location
         return engine

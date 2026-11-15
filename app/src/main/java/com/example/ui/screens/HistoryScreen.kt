@@ -52,7 +52,8 @@ fun HistoryScreen(
     modifier: Modifier = Modifier
 ) {
     val isUrdu = LocalAppLanguage.current.isUrdu
-    val seasons = remember { repository.getHistoricalSeasons() }
+    val engine = repository.engine
+    val seasons = remember(engine, isUrdu) { repository.getHistoricalSeasons(isUrdu) }
 
     Column(
         modifier = modifier
@@ -74,13 +75,21 @@ fun HistoryScreen(
             )
         }
         Text(
-            text = if (isUrdu) "ناسا سیٹلائٹ واقعات، موسم کا اثر اور پچھلے سالوں کے تجربات"
-                else "Historical weather impacts, NASA Earth events, and farmer lessons",
+            text = if (isUrdu) "ڈھڈیال کے علاقے کا موسمی ریکارڈ اور ضلع چکوال کی بارانی گندم کی رپورٹ شدہ پیداوار۔ یہ آپ کے اپنے کھیت کی ڈائری نہیں۔"
+                else "Weather record for the Dhudial area and reported rainfed wheat yield for Chakwal district. This is not a diary of your own field.",
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        if (seasons.isEmpty()) {
+            Text(
+                text = if (isUrdu) "ریکارڈ لوڈ ہو رہا ہے..." else "Loading the record...",
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
 
         seasons.forEach { season ->
             HistoricalSeasonCard(season = season)
@@ -94,7 +103,9 @@ fun HistoryScreen(
 @Composable
 fun HistoricalSeasonCard(season: HistoricalSeasonData) {
     val isUrdu = LocalAppLanguage.current.isUrdu
-    val isGoodYear = season.yieldMaundPerAcre >= 30.0
+    val hasYield = season.yieldMaundPerAcre > 0.0
+    val isGoodYear = season.yieldMaundPerAcre >= 20.0
+    val yieldText = String.format(java.util.Locale.US, "%.1f", season.yieldMaundPerAcre)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -135,7 +146,11 @@ fun HistoricalSeasonCard(season: HistoricalSeasonData) {
                     color = if (isGoodYear) FieldGreen else Color(0xFF8D6E63)
                 ) {
                     Text(
-                        text = if (isUrdu) "${season.yieldMaundPerAcre.toInt()} من فی ایکڑ" else "${season.yieldMaundPerAcre.toInt()} maunds/acre",
+                        text = if (!hasYield) {
+                            if (isUrdu) "ضلعی پیداوار رپورٹ نہیں" else "District yield not reported"
+                        } else {
+                            if (isUrdu) "$yieldText من فی ایکڑ (ضلعی اوسط)" else "$yieldText maunds/acre (district)"
+                        },
                         color = Color.White,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
@@ -167,7 +182,7 @@ fun HistoricalSeasonCard(season: HistoricalSeasonData) {
 
             // NASA Events attached to this season
             Text(
-                text = if (isUrdu) "سیٹلائٹ واقعات (NASA Events):" else "NASA Observations & Events:",
+                text = if (isUrdu) "سیزن کا ریکارڈ:" else "Season record:",
                 fontWeight = FontWeight.Bold,
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant

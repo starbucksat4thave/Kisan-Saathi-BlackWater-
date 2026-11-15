@@ -129,7 +129,7 @@ fun MainAppHost(audioHelper: AudioHelper) {
             runCatching { com.example.engine.KisanAssets.load(context) }.getOrNull()
         }
     }
-    val aiService = remember { KisanAiService() }
+    val aiService = remember { KisanAiService(repository) }
 
     var currentUser by remember { mutableStateOf(Firebase.auth.currentUser) }
     var isDemoModeActive by remember { mutableStateOf(false) }
