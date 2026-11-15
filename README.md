@@ -1,6 +1,10 @@
+![Kisan Saathi: the right advice, on the right day, in the farmer's own language](docs/images/kisan-saathi-banner.png)
+
 # Kisan Saathi (کسان ساتھی)
 
 **A voice-first farming companion for rainfed smallholder farmers in Pothohar, Pakistan.**
+
+**Download:** the latest debug build is at [`release/kisan-saathi-debug.apk`](release/kisan-saathi-debug.apk). It is rebuilt automatically on every push to `main`.
 
 Kisan Saathi helps farmers make timely, practical decisions throughout the wheat-growing season. The project brings together NASA Earth-observation datasets, regional agronomy guidance, Urdu-first assistance, and simple tools for tracking field health and food-loss prevention.
 
