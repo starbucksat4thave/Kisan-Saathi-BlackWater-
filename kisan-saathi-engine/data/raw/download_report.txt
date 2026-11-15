@@ -1,0 +1,19 @@
+run date: 2026-11-15
+locations: {"chakwal_city": [32.93, 72.86], "bhaun": [32.86, 72.77], "kallar_kahar": [32.78, 72.7], "dhudial": [33.0, 72.97]}
+
+OK    NASA POWER           chakwal_city   7989 rows
+OK    Open-Meteo history   chakwal_city   7982 rows
+OK    Open-Meteo forecast  chakwal_city   7 rows
+OK    SoilGrids            chakwal_city   7 rows
+OK    NASA POWER           bhaun          7989 rows
+OK    Open-Meteo history   bhaun          7982 rows
+OK    Open-Meteo forecast  bhaun          7 rows
+FAIL  SoilGrids            bhaun          failed after 4 tries: HTTP Error 503: Service Temporarily Unavailable
+OK    NASA POWER           kallar_kahar   7989 rows
+OK    Open-Meteo history   kallar_kahar   7982 rows
+OK    Open-Meteo forecast  kallar_kahar   7 rows
+FAIL  SoilGrids            kallar_kahar   failed after 4 tries: The read operation timed out
+OK    NASA POWER           dhudial        7989 rows
+OK    Open-Meteo history   dhudial        7982 rows
+OK    Open-Meteo forecast  dhudial        7 rows
+OK    SoilGrids            dhudial        7 rows

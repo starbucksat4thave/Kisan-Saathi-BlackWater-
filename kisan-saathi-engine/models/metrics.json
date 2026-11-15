@@ -1,0 +1,58 @@
+{
+ "soil_wetness_model": {
+  "train_rows": 11964,
+  "test_rows": 4383,
+  "test_years": "2016-2019",
+  "mae_model": 0.0603,
+  "mae_day_of_year_average": 0.0771,
+  "r2_model": 0.588,
+  "r2_day_of_year_average": 0.368,
+  "mae_model_oct_to_apr": 0.0629,
+  "export_parity_max_abs_diff": 0.0,
+  "feature_importance": {
+   "rain30": 0.633,
+   "et7": 0.154,
+   "api": 0.071,
+   "et14": 0.044,
+   "doy_cos": 0.033,
+   "rain14": 0.016,
+   "doy_sin": 0.013,
+   "rain7": 0.012,
+   "rain3": 0.01,
+   "tmean7": 0.008,
+   "rain1": 0.003,
+   "dry_days": 0.002
+  }
+ },
+ "seasonal_heat_classifier": {
+  "seasons": 21,
+  "leave_one_out_accuracy": 0.38,
+  "coin_flip_baseline": 0.5
+ },
+ "yield_observed": {
+  "seasons": [
+   "2019-20",
+   "2020-21",
+   "2021-22",
+   "2023-24",
+   "2024-25"
+  ],
+  "rainfed_kg_per_ha": [
+   1718.0,
+   1664.0,
+   1602.0,
+   2292.0,
+   1585.0
+  ],
+  "mean_maund_per_acre": 17.9,
+  "min_maund_per_acre": 16.0,
+  "max_maund_per_acre": 23.2,
+  "corr_with_nov_apr_rain": 0.28,
+  "corr_with_grain_fill_heat_days": -0.31,
+  "note": "5 seasons only: correlations are descriptive, not a model"
+ },
+ "power_minus_era5_tmax_c": {
+  "2005-2019": 2.59,
+  "2020-2026": 0.29
+ }
+}

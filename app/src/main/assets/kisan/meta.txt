@@ -1,0 +1,9 @@
+porosity=0.468
+clay_pct=26.0
+sand_pct=36.8
+silt_pct=37.2
+soil_ph=7.6
+expected_rainfed_yield_maund_per_acre=17.9
+yield_min_maund_per_acre=16.0
+yield_max_maund_per_acre=23.2
+soil_model_mae_wetness=0.0603

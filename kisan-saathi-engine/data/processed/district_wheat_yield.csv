@@ -1,0 +1,21 @@
+season,district,rainfed_yield_kg_per_ha,irrigated_yield_kg_per_ha,rainfed_area_000_acres,source
+2019-20,Chakwal,1718,,382.0,Punjab CRS Rabi Final Estimates 2020-21
+2020-21,Chakwal,1664,2693.0,376.0,Punjab CRS Rabi Final Estimates 2020-21 and 2021-22
+2021-22,Chakwal,1602,3273.0,356.0,Punjab CRS Final Rabi Estimates 2021-22
+2023-24,Chakwal,2292,2504.0,251.0,Punjab CRS Final Rabi Estimates 2024-25
+2024-25,Chakwal,1585,2454.0,241.0,Punjab CRS Final Rabi Estimates 2024-25
+2019-20,Attock,1619,2466.0,482.0,Punjab CRS Rabi Final Estimates 2020-21
+2020-21,Attock,1750,2858.0,494.0,Punjab CRS Rabi Final Estimates 2020-21 and 2021-22
+2021-22,Attock,1645,3320.0,438.0,Punjab CRS Final Rabi Estimates 2021-22
+2023-24,Attock,1851,3951.0,462.0,Punjab CRS Final Rabi Estimates 2024-25
+2024-25,Attock,1356,3849.0,430.0,Punjab CRS Final Rabi Estimates 2024-25
+2019-20,Rawalpindi,1505,2897.0,370.0,Punjab CRS Rabi Final Estimates 2020-21
+2020-21,Rawalpindi,1654,1866.0,381.0,Punjab CRS Rabi Final Estimates 2020-21 and 2021-22
+2021-22,Rawalpindi,1925,2853.0,386.0,Punjab CRS Final Rabi Estimates 2021-22
+2023-24,Rawalpindi,2466,2819.0,402.0,Punjab CRS Final Rabi Estimates 2024-25
+2024-25,Rawalpindi,1651,2292.0,401.0,Punjab CRS Final Rabi Estimates 2024-25
+2019-20,Jhelum,1271,2744.0,154.0,Punjab CRS Rabi Final Estimates 2020-21
+2020-21,Jhelum,1262,2390.0,170.0,Punjab CRS Rabi Final Estimates 2020-21 and 2021-22
+2021-22,Jhelum,1768,2865.0,,Punjab CRS Final Rabi Estimates 2021-22
+2023-24,Jhelum,2227,3200.0,182.0,Punjab CRS Final Rabi Estimates 2024-25
+2024-25,Jhelum,1893,2946.0,173.0,Punjab CRS Final Rabi Estimates 2024-25
