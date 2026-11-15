@@ -1,19 +1,105 @@
-*.iml
-.gradle
-.kotlin
+# ---------------------------------------------------------------------------
+# Secrets and credentials: never commit these
+# ---------------------------------------------------------------------------
+# Environment files hold API keys (for example GEMINI_API_KEY). Only the
+# placeholder file .env.example is tracked.
+.env
+.env.*
+!.env.example
+*.env
+secrets.properties
+keystore.properties
+signing.properties
+local.properties
 /local.properties
+
+# Signing keys and certificates
+*.jks
+*.keystore
+debug.keystore
+my-upload-key.jks
+*.pem
+*.p12
+*.pfx
+*.key
+*.cer
+*.crt
+
+# Server-side Google and Firebase credentials. These grant admin access and
+# must never be public. (app/google-services.json is different: it is the
+# client configuration the app needs to build, so it stays tracked.)
+*service-account*.json
+*service_account*.json
+*-firebase-adminsdk-*.json
+client_secret*.json
+credentials*.json
+GoogleService-Info.plist
+.firebaserc.local
+
+# NASA Earthdata and other login files
+.netrc
+_netrc
+.urs_cookies
+.dodsrc
+
+# ---------------------------------------------------------------------------
+# Android and Gradle
+# ---------------------------------------------------------------------------
+*.iml
+.gradle/
+.gradle
+.kotlin/
+.kotlin
+build/
+/build
+/captures
+.externalNativeBuild
+.cxx
+*.hprof
+*.apk
+*.aab
+*.ap_
+# The one APK that is published on purpose, written by the build workflow.
+!release/kisan-saathi-debug.apk
+
+# Android Studio / IntelliJ
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
-.env
-debug.keystore
+/.idea/shelf
+/.idea/httpRequests
+/.idea/dataSources*
+.vscode/
+
+# ---------------------------------------------------------------------------
+# Python (engine and backend)
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# ---------------------------------------------------------------------------
+# Flutter / Dart
+# ---------------------------------------------------------------------------
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+
+# ---------------------------------------------------------------------------
+# Logs, local emulator state and operating-system files
+# ---------------------------------------------------------------------------
+*.log
 *-debug.log
+.firebase/
+emulator-data/
+.DS_Store
+Thumbs.db
+*.swp
